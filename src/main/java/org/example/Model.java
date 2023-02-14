@@ -1,5 +1,6 @@
 package org.example;
 
+import ml.dmlc.xgboost4j.java.Booster;
 import ml.dmlc.xgboost4j.java.DMatrix;
 import ml.dmlc.xgboost4j.java.XGBoost;
 import ml.dmlc.xgboost4j.java.XGBoostError;
@@ -12,7 +13,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class Model {
-    public static Result trainLoop(int numRound) throws IOException {
+    public static Result trainLoop(int numRound) throws IOException, XGBoostError {
         List<Double> precisionList = new ArrayList<>();
         List<Double> recallList = new ArrayList<>();
         List<Double> f1List = new ArrayList<>();
@@ -24,11 +25,13 @@ public class Model {
             // Preprocess input
             InputPartition part = preprocess("Input/" + file.getName());
 
+            part.trainDMatrix().setLabel(part.trainLabels()); //todo: set this earlier, e.g. in preprocess
+
             // Train model
-            Model bst = XGBoost.train(part.trainFeatures(), part.trainLabels(), numRound);
+            Booster bst = XGBoost.train(part.trainDMatrix(), null, numRound, null, null, null); //todo: set some optional params?
             double bestThreshold = bst.getBestThreshold();
 
-            // Test modelS
+            // Test model
             var result = test(bst, bestThreshold, part.testFeatures(), part.testLabels());
 
             // Normalize confusion matrix
@@ -49,7 +52,7 @@ public class Model {
             recallList.add(result.get("recall"));
             f1List.add(result.get("f1"));
             //cMatrixList.add(cMatrixNorm); todo: fix confusion matrix
-            featureImportanceList.add(getFeatureImportances(bst));
+            featureImportanceList.add((List<Map.Entry<String, Double>>) getFeatureImportances(bst)); //todo: fix the list/dict discrepancy
         }
 
         // Evaluate feature importance
@@ -66,10 +69,11 @@ public class Model {
     }
 
 
-    public static Map<String, Double> test(XGBoost bst, double bestThreshold, double[][] testFeatures, double[] testLabels, String type)
+    public static Map<String, Double> test(Booster bst, double bestThreshold, double[][] testFeatures, float[] testLabels)
             throws XGBoostError {
-        DMatrix dtest = new DMatrix(testFeatures, testLabels);
-        double[] prediction = bst.predict(dtest); //todo
+        DMatrix dtest = new DMatrix(""); //todo: fill properly using testFeatures
+        dtest.setLabel(testLabels);
+        float[][] prediction = bst.predict(dtest);
 
         // compute precision, recall, and F1 score
         double[] predLabels = new double[prediction.length];
@@ -91,10 +95,11 @@ public class Model {
         return result;
     }
 
-    public static Map<Double, Double> inference(XGBoost bst, double bestThreshold, double[][] testFeatures, double[] testLabels, String type)
+    public static Map<Double, Double> inference(Booster bst, double bestThreshold, double[][] testFeatures, float[] testLabels)
             throws XGBoostError {
-        DMatrix dtest = new DMatrix(testFeatures, testLabels);
-        double[] prediction = bst.predict(dtest); //todo
+        DMatrix dtest = new DMatrix(""); //todo: fill properly using testFeatures
+        dtest.setLabel(testLabels);
+        float[][] prediction = bst.predict(dtest);
 
         double[] predLabels = new double[prediction.length];
         Map<Double, Double> result = new HashMap<>();
@@ -123,19 +128,23 @@ public class Model {
     public static double[] getLabels(String path) {
         File folder = new File(path);
         File[] files = folder.listFiles();
+
+        assert files != null;
         Arrays.sort(files);
+
         List<double[]> mergedFeatures = Arrays.stream(files)
                 .filter(f -> f.getName().contains("labels"))
                 .map(f -> Utils.readDoubleArrayFromFile(f.getAbsolutePath()))
                 .collect(Collectors.toList());
+
         return Utils.concatenateDoubleArrays(mergedFeatures);
     }
 
-    public Map<String, Integer> getFeatureImportances(XGBoost bst) throws XGBoostError {
-        return bst.getFeatureScore();
+    public static Map<String, Integer> getFeatureImportances(Booster bst) throws XGBoostError {
+        return null; //todo bst.getFeatureScore();
     }
 
-    public static InputPartition preprocess(String path) {
+    public static InputPartition preprocess(String path) throws XGBoostError {
         String trainPath = path + "/train/";
         String testPath = path + "/test/";
 
@@ -144,6 +153,6 @@ public class Model {
         double[][] testFeatures = mergeFeatures(testPath);
         double[] testLabels = getLabels(testPath);
 
-        return new InputPartition(trainFeatures, trainLabels, testFeatures, testLabels);
+        return new InputPartition(trainFeatures, trainLabels, testFeatures, testLabels, new DMatrix(""), new DMatrix("")); //todo: fix the Dmatrix situation
     }
 }

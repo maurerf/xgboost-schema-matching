@@ -9,7 +9,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-import static org.example.Model.trainLoop;
+import static org.example.FireindarkModel.trainLoop;
 
 public class Main {
     public static void main(String[] args) throws IOException, XGBoostError {
@@ -25,9 +25,9 @@ public class Main {
 
         Result result = trainLoop(300);
         // give evaluation results
-        System.out.println("Average Confusion Matrix: " + Utils.doubleListAverage(result.precisionList()));
-        System.out.println("Average Confusion Matrix: " + Utils.doubleListAverage(result.recallList()));
-        System.out.println("Average Confusion Matrix: " + Utils.doubleListAverage(result.f1List()));
+        System.out.println("Average Precision: " + Utils.doubleListAverage(result.precisionList()));
+        System.out.println("Average Recall: " + Utils.doubleListAverage(result.recallList()));
+        System.out.println("Average F1 Score: " + Utils.doubleListAverage(result.f1List()));
         System.out.println("Average Confusion Matrix: " + Utils.doubleListAverage(result.confusionMatrixList()));
         for(var entry : result.featureNameImportance().entrySet()) {
             System.out.println(entry.getKey() + ": " + entry.getValue());

@@ -2,9 +2,7 @@ package org.example;
 
 import java.util.List;
 
-//todo: use class templating (cf. concatenation funcs)
 public class Utils {
-    //@Contract(pure=true) todo deploy this contract everywhere
     public static double doubleListAverage(List<Double> list) {
         return list.stream()
         .mapToDouble(d -> d)

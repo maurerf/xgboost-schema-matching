@@ -7,6 +7,5 @@ public record Result(
         List<Double> precisionList,
         List<Double> recallList,
         List<Double> f1List,
-        List<Double> confusionMatrixList,
         Map<String, Double> featureNameImportance
 ) { }

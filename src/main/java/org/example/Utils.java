@@ -2,9 +2,7 @@ package org.example;
 
 import java.util.List;
 
-//todo: use class templating (cf. concatenation funcs)
 public class Utils {
-    //@Contract(pure=true) todo deploy this contract everywhere
     public static double doubleListAverage(List<Double> list) {
         return list.stream()
         .mapToDouble(d -> d)
@@ -12,14 +10,14 @@ public class Utils {
         .orElse(0d);
     }
 
-    public static double[] concatenateDoubleArrays(List<double[]> arrays) {
+    public static float[] concatenateFloatArrays(List<float[]> arrays) {
         int rows = 0;
-        for (double[] array : arrays) {
+        for (float[] array : arrays) {
             rows += array.length;
         }
-        double[] result = new double[rows];
+        float[] result = new float[rows];
         int index = 0;
-        for (double[] array : arrays) {
+        for (float[] array : arrays) {
             for (var row : array) {
                 result[index++] = row;
             }
@@ -44,7 +42,7 @@ public class Utils {
         return result;
     }
 
-    public static double[] readDoubleArrayFromFile(String filePath) {
+    public static float[] roadFloatArrayFromFile(String filePath) {
         // implement code to read a double[] array from file
         return null;
     }
